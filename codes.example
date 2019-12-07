@@ -1,0 +1,17 @@
+#This file goes to /var/www/data/kaku/codes
+#
+# This file contains the configuration for the codes
+# Format is:
+# key;comment;list of codes
+# Key:     key that is used in the web interface; must be unique
+# Comment: Text that will be displayed before the buttons
+# Codes:   a comma separated list of codes 
+#
+# Example:
+# 0living;Living room;12345671,12345672,12345673
+# corner;lamp in the corner;12345673
+# fpl;Fireplace lamp;12345671
+# tbl;Lamp on the table;12345672
+#
+#
+

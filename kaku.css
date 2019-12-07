@@ -1,0 +1,44 @@
+/*
+#REMOTE@ chi /var/www/html/kaku.css
+*/
+.cronon {
+	color: #000000;
+	font-size: calc((75vw - 4.5rem) / 65);
+	background-color: #ff8888;
+	width: 4;
+}
+.cronoff {
+	color: #ffffff;
+	font-size: calc((75vw - 4.5rem) / 65);
+	background-color: #000000;
+	width: 4;
+}
+.cron {
+	color: #000000;
+	font-size: calc((75vw - 4.5rem) / 65);
+	background-color: #cccccc;
+	width: 4;
+}
+.swname {
+	width:50%;
+	font-size: 5mm;
+}
+.swoff {
+	width:25%;
+}
+.swon {
+	width:25%;
+}
+.onoff {
+	width:100%;
+	font-size: 5mm;
+}
+.tab {
+	width:33%;
+	font-size: 5mm
+}
+
+table.switchtable {
+	width:100%;
+	font-size: 5mm;
+}

@@ -1,0 +1,3 @@
+#  m              h  D   M  dow  cmd 
+1,5,10,15,20,25   *  *   *   *   /bin/bash /usr/local/bin/kakucronjob > /dev/null 2>/dev/null
+30,35,40,45,50,55 *  *   *   *   /bin/bash /usr/local/bin/kakucronjob > /dev/null 2>/dev/null
