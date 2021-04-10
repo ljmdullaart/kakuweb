@@ -2,6 +2,15 @@
 #REMOTE@ chi /usr/local/bin/kakucronjob
 
 VERBOSE=false
+LOG=/tmp/kakucron.log
+logsize=$(ls -s $LOG | sed 's/ .*//')
+if [ $logsize -ge 500 ] ; then
+    mv $LOG.1 $LOG.2
+    mv $LOG $LOG.1
+    touch $LOG
+fi
+
+date >>$LOG
 
 if [ "$1" = "-v" ] ; then
 	VERBOSE=true
@@ -37,6 +46,7 @@ debug test ${codemap[test]}
 
 if [ -f data ] ; then
 	DATAFILE=data
+	echo "NO GLOBAL DATA FILE">>$LOG
 else
 	DATAFILE=/var/www/data/kaku/data
 fi
@@ -46,6 +56,7 @@ if [ -x /usr/local/bin/newkaku ] ; then
 	KAKU=/usr/local/bin/newkaku
 else
 	KAKU=/bin/echo
+	echo "NO KAKU COMMAND">>$LOG
 fi
 debug KAKU=$KAKU
 
@@ -63,6 +74,7 @@ kakucode(){
 		if [ "$codes" = "$c" ] ; then
 			codes=''
 		fi
+		echo "$c $sub $state">>$LOG
 		$KAKU $c $sub $state | logger 2>&1
 	  	sleep 1
 		$KAKU $c $sub $state | logger 2>&1
@@ -75,7 +87,7 @@ if $VERBOSE ; then
 fi
 cat $DATAFILE | grep "on$hour;" | sed 's/,.*//' |
 while read code ; do
-	  logger "KAKU ON $NOW - $hour: $code"
+	  logger "KAKU CRON ON $NOW - $hour: $code"
 	  debug kakucode $code 1 on 
 	  kakucode $code 1 on 
 	  sleep 1
@@ -90,7 +102,7 @@ if $VERBOSE ; then
 fi
 cat $DATAFILE | grep "off$hour;" | sed 's/,.*//' |
 while read code ; do
-	  logger "KAKU OFF $NOW - $hour: $code"
+	  logger "KAKU CRON OFF $NOW - $hour: $code"
 	  debug kakucode $code 1 off 
 	  kakucode $code 1 off 
 	  sleep 1
