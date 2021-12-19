@@ -1,4 +1,5 @@
 #!/bin/bash
+#DEP tag/pgm.do_me
 #REMOTE@ chi /usr/local/bin/kakucronjob
 
 VERBOSE=false
