@@ -2,7 +2,8 @@ INTRO
 -----
 This is a very simple web-interface for raspKAKU, a program that
 allows you to switch Klik-aan, Klik-uit switches with a 433MHz 
-module on a Raspberry Pi.
+module on a Raspberry Pi. It also provides an interface for API
+calls to Domoticz.
 
 
 REQUIREMENTS
