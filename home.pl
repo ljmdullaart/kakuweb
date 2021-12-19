@@ -1,8 +1,81 @@
 #!/usr/bin/perl 
+#DEP tag/pgm.do_me
 #REMOTE@ chi /var/www/cgi-bin/home.pl
 use strict;
 use CGI;
 use POSIX qw(strftime);
+use LWP;
+use URI;
+use JSON;
+use Data::Dumper;
+
+my $SERVER='domoticz.home:8080';
+my $APIURL='json.htm';
+my $response;
+my @result;
+
+my @switches;
+my @index;
+my $maxswitch=0;
+
+open (my $LOG,'>','/tmp/ome.pl.log');
+
+my $browser=LWP::UserAgent->new();
+my $url = URI->new("http://$SERVER/$APIURL");
+
+$url->query_form(
+    type => "command",
+    param => "getlightswitches"
+);
+$response=$browser->get($url);
+
+@result=split ('\n',$$response{'_content'});
+my $inresult=0;
+my $inswitch=0;
+my $n; my $i;
+for (@result){
+	
+	s/^[ 	]*//;
+	chomp;
+	if ($inresult==0){
+		if (/"result"/){ $inresult=1; }
+	}
+	elsif($inswitch==0){
+		if (/\{/){
+			$inswitch=1;
+		}
+	}
+	elsif (/"Name.*:.*"(.*)"/){
+		$n=$1;
+	}
+	elsif (/"idx.*:.*"(.*)"/){
+		$i=$1;
+	}
+	elsif (/\},*/){
+		$switches[$maxswitch]=$n;
+		$index[$maxswitch]=$i;
+		$maxswitch++;
+		$inswitch=0;
+	}
+}
+
+sub domo {
+	(my $swpat,my $switchcmd)=@_;
+	print $LOG "domo: $swpat $switchcmd\n";
+	for (my $i=0; $i<$maxswitch; $i++){
+		if ($switches[$i] =~/$swpat/){
+			$url->query_form(
+    			type => "command",
+    			param => "switchlight",
+				idx => "$index[$i]",
+				switchcmd=>$switchcmd
+			);
+			$response=$browser->get($url);
+		}
+	}
+}
+
+
 
 my $datafile='/var/www/data/kaku/data';
 my $codefile='/var/www/data/kaku/codes';
@@ -35,6 +108,7 @@ my @lines ;
 
 my %codes;
 my %codelist;
+my %domoname;
 if (open (my $CODES, "<", $codefile)){
 	while (<$CODES>){
 		chomp;
@@ -42,9 +116,11 @@ if (open (my $CODES, "<", $codefile)){
 		my @a=/;/g;
 		if ( scalar @a == 2){
 
-			(my $key,my $name,my $list)=split ';';
+			(my $key,my $name,my $list,my $domo)=split ';';
+			$domo='' unless defined $domo;
 			$codes{$key}=$name;
 			$codelist{$key}=$list;
+			$domoname{$key}=$domo;
 		}
 
 	}
@@ -104,16 +180,28 @@ if ($action =~ /aan(..*)/) {
 	my $key=$1;
 	my @list=split(',',$codelist{$key});
 	for (@list){
-		system ("logger KAKU  $_ 1 on");
-		system ("newkaku $_ 1 on | logger 2>&1");
+		if (/^domo/){
+			s/^domo//;
+			domo($_,'On');
+		}
+		else {
+			system ("logger KAKU  $_ 1 on");
+			system ("newkaku $_ 1 on | logger 2>&1");
+		}
 	}
 }
 elsif ($action =~ /uit(..*)/) {
 	my $key=$1;
 	my @list=split(',',$codelist{$key});
 	for (@list){
-		system ("logger KAKU  $_ 1 off");
-		system ("newkaku $_ 1 off | logger 2>&1");
+		if (/^domo/){
+			s/^domo//;
+			domo($_,'Off');
+		}
+		else {
+			system ("logger KAKU  $_ 1 off");
+			system ("newkaku $_ 1 off | logger 2>&1");
+		}
 	}
 }
 elsif ($action =~/^c/){
@@ -150,7 +238,7 @@ if (open (my $DATA, ">", $datafile)){
 #
 #
 #
-print $query->h1( "Klik Aan, Klik Uit" );
+print $query->h1( "Thuis Daalder 10" );
 print "\n";
 print $query->hr;
 print $query->start_form;
