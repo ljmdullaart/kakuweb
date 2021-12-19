@@ -13,5 +13,12 @@
 # fpl;Fireplace lamp;12345671
 # tbl;Lamp on the table;12345672
 #
+# It is now possible to switch on/off with calls to Domoticz.
+# Use 'domo' followed by a pattern to initiate the on/off call.
+# The string is used as pattern on the name of switches on the
+# Domoticz server. For example: if the switch for the corner
+# lamp would be called 'corner_lamp' in Domoticz, the line 
+# would be:
 #
+# corner;Lamp in the corner;domocorner_lamp
 
