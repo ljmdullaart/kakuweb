@@ -5,6 +5,12 @@ allows you to switch Klik-aan, Klik-uit switches with a 433MHz
 module on a Raspberry Pi. It also provides an interface for API
 calls to Domoticz.
 
+For calls to the Domoticz API, make sure that the line
+
+my $SERVER='domoticz.home:8080';
+
+in home.pl points to your Domoticz server.
+
 
 REQUIREMENTS
 ------------
