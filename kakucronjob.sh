@@ -2,7 +2,11 @@
 #DEP tag/pgm.do_me
 #REMOTE@ chi /usr/local/bin/kakucronjob
 
-VERBOSE=false
+DOMOTICZ=domoticz.home:8888
+domocodes=/tmp/domocodes
+
+curl "http://$DOMOTICZ/json.htm?type=command&param=devices_list" | jq '.result[]|{value,name}|join(" ")'  | sed 's/"//g'  > $domocodes
+
 LOG=/tmp/kakucron.log
 logsize=$(ls -s $LOG | sed 's/ .*//')
 if [ $logsize -ge 500 ] ; then
@@ -63,6 +67,7 @@ debug KAKU=$KAKU
 
 kakucode(){
 	debug entering kakucode
+	nstate=0
 	code="$1"
 	sub="$2"
 	state="$3"
@@ -75,10 +80,31 @@ kakucode(){
 		if [ "$codes" = "$c" ] ; then
 			codes=''
 		fi
-		echo "$c $sub $state">>$LOG
-		$KAKU $c $sub $state | logger 2>&1
-	  	sleep 1
-		$KAKU $c $sub $state | logger 2>&1
+		debug "    loop - c=$c - codes=$codes"
+		if echo "$c" | grep -q '^domo' ; then
+			c=${c#domo}
+			idx=$(sed -n "s/ $c$//p" $domocodes);
+			debug "        c=$c - idx=$idx"
+			if [ "$state" = "on" ] ; then
+				debug curl "http://$DOMOTICZ/json.htm?type=command&param=switchlight&idx=$idx&switchcmd=On"
+				curl "http://$DOMOTICZ/json.htm?type=command&param=switchlight&idx=$idx&switchcmd=On"
+			else
+				debug curl "http://$DOMOTICZ/json.htm?type=command&param=switchlight&idx=$idx&switchcmd=Off"
+				curl "http://$DOMOTICZ/json.htm?type=command&param=switchlight&idx=$idx&switchcmd=Off"
+			fi
+					
+		elif echo "$c" | grep -q '^kaku' ; then
+			c=${c#kaku}
+			debug "$c $sub $state">>$LOG
+			$KAKU $c $sub $state | logger 2>&1
+	  		sleep 1
+			$KAKU $c $sub $state | logger 2>&1
+		else
+			debug "$c $sub $state">>$LOG
+			$KAKU $c $sub $state | logger 2>&1
+	  		sleep 1
+			$KAKU $c $sub $state | logger 2>&1
+		fi
 	done
 }
 		
