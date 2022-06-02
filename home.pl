@@ -9,7 +9,7 @@ use URI;
 use JSON;
 use Data::Dumper;
 
-my $SERVER='domoticz.home:8080';
+my $SERVER='domoticz.home:8888';
 my $APIURL='json.htm';
 my $response;
 my @result;
@@ -17,8 +17,9 @@ my @result;
 my @switches;
 my @index;
 my $maxswitch=0;
+my $lastresult='-';
 
-open (my $LOG,'>','/tmp/ome.pl.log');
+open (my $LOG,'>>','/tmp/home.pl.log');
 
 my $browser=LWP::UserAgent->new();
 my $url = URI->new("http://$SERVER/$APIURL");
@@ -62,16 +63,19 @@ for (@result){
 sub domo {
 	(my $swpat,my $switchcmd)=@_;
 	print $LOG "domo: $swpat $switchcmd\n";
+	system ("logger domo: $swpat $switchcmd");
 	for (my $i=0; $i<$maxswitch; $i++){
 		if ($switches[$i] =~/$swpat/){
+			system ("logger domo: $swpat $switchcmd index[$i] = $index[$i]");
 			$url->query_form(
     			type => "command",
     			param => "switchlight",
-				idx => "$index[$i]",
-				switchcmd=>$switchcmd
+			idx => "$index[$i]",
+			switchcmd =>$switchcmd
 			);
 			$response=$browser->get($url);
 		}
+			
 	}
 }
 
@@ -127,24 +131,8 @@ if (open (my $CODES, "<", $codefile)){
 	close $CODES;
 }
 else {
-	print "<p>No code file</p>";
+	$lastresult= "<p>No code file</p>";
 }
-#$codes{7500}="lampen TVkast L-J";
-#$codes{7501}="vitrine fototoestellen";
-#$codes{7502}="vitrine souvenirs";
-#$codes{7503}="bar meubel";
-#$codes{7504}="printer";
-#$codes{7505}="meterkast";
-#$codes{7506}="lamp boven cavias";
-#$codes{7507}="lamp bibliotheek";
-#$codes{7508}="open haard";
-#$codes{7510}="fontein";
-#$codes{7600}="kerst ramen voor";
-#$codes{7601}="kerst klokjes achter";
-#$codes{7602}="kerstboom";
-#$codes{'woonkamer'}="Woonkamer L-J";
-##
-
 # read form data
 
 my %params=$query->Vars;
@@ -178,11 +166,18 @@ for my $k (keys %codes){
 #
 if ($action =~ /aan(..*)/) {
 	my $key=$1;
+	$lastresult="$key aan";
 	my @list=split(',',$codelist{$key});
 	for (@list){
 		if (/^domo/){
 			s/^domo//;
 			domo($_,'On');
+			system ("logger domo  $_  1");
+		}
+		elsif (/^kaku/){
+			s/^kaku//;
+			system ("logger KAKU  $_ 1 on");
+			system ("newkaku $_ 1 on | logger 2>&1");
 		}
 		else {
 			system ("logger KAKU  $_ 1 on");
@@ -192,11 +187,18 @@ if ($action =~ /aan(..*)/) {
 }
 elsif ($action =~ /uit(..*)/) {
 	my $key=$1;
+	$lastresult="$key uit";
 	my @list=split(',',$codelist{$key});
 	for (@list){
 		if (/^domo/){
 			s/^domo//;
 			domo($_,'Off');
+			system ("logger domo  $_  ");
+		}
+		elsif (/^kaku/){
+			s/^kaku//;
+			system ("logger KAKU  $_ 1 off");
+			system ("newkaku $_ 1 off | logger 2>&1");
 		}
 		else {
 			system ("logger KAKU  $_ 1 off");
@@ -205,6 +207,7 @@ elsif ($action =~ /uit(..*)/) {
 	}
 }
 elsif ($action =~/^c/){
+	$lastresult="clock set";
 	for my $k (sort (keys %codes)){
 		my $hr;
 		if (exists ($crons{$k})){
@@ -238,8 +241,9 @@ if (open (my $DATA, ">", $datafile)){
 #
 #
 #
-print $query->h1( "Thuis Daalder 10" );
+print $query->h1( "Thuis" );
 print "\n";
+print "$lastresult\n";
 print $query->hr;
 print $query->start_form;
 print $query->submit(
